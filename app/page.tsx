@@ -21,6 +21,7 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null)
   const [isShortlistLoading, setIsShortlistLoading] = useState(true)
   const [generatedNames, setGeneratedNames] = useState<Set<string>>(new Set())
+  const [trendingDisplayCount, setTrendingDisplayCount] = useState(5)
   const supabase = createClient()
 
   // Load shortlist and trending names
@@ -31,12 +32,12 @@ export default function HomePage() {
       setIsShortlistLoading(true)
 
       try {
-        // Load trending names (top 10 by popularity score)
+        // Load trending names (top 50 by popularity score)
         const { data: trending } = await supabase
           .from('names')
           .select('*')
           .order('popularity_score', { ascending: false })
-          .limit(10)
+          .limit(50)
 
         if (trending) {
           setTrendingNames(trending as NameData[])
@@ -279,23 +280,33 @@ export default function HomePage() {
             <div>
               <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-900">Trending Names</h2>
               {trendingNames.length > 0 ? (
-                <div className="space-y-3 sm:space-y-4">
-                  {trendingNames.map((name, index) => (
-                    <div key={index} className="bg-white rounded-lg p-4 sm:p-6 border border-gray-200">
-                      <h3 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-3 text-gray-900">{name.name}</h3>
-                      {name.meaning && (
-                        <p className="text-sm sm:text-base text-gray-700 mb-2">
-                          <span className="font-semibold">Meaning:</span> {name.meaning}
-                        </p>
-                      )}
-                      {name.origin && (
-                        <p className="text-sm sm:text-base text-gray-700">
-                          <span className="font-semibold">Origin:</span> {name.origin}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                <>
+                  <div className="space-y-3 sm:space-y-4">
+                    {trendingNames.slice(0, trendingDisplayCount).map((name, index) => (
+                      <div key={index} className="bg-white rounded-lg p-4 sm:p-6 border border-gray-200">
+                        <h3 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-3 text-gray-900">{name.name}</h3>
+                        {name.meaning && (
+                          <p className="text-sm sm:text-base text-gray-700 mb-2">
+                            <span className="font-semibold">Meaning:</span> {name.meaning}
+                          </p>
+                        )}
+                        {name.origin && (
+                          <p className="text-sm sm:text-base text-gray-700">
+                            <span className="font-semibold">Origin:</span> {name.origin}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {trendingDisplayCount < trendingNames.length && (
+                    <button
+                      onClick={() => setTrendingDisplayCount(prev => prev + 5)}
+                      className="w-full mt-4 px-4 py-3 bg-white border-2 border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors font-semibold"
+                    >
+                      Show More ({trendingNames.length - trendingDisplayCount} remaining)
+                    </button>
+                  )}
+                </>
               ) : (
                 <div className="bg-gray-200 rounded-lg h-64"></div>
               )}
