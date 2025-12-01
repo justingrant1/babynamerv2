@@ -339,22 +339,61 @@ export default function ShortlistPage() {
                     </div>
 
                     {/* Star Rating */}
-                    <div className="flex items-center gap-1 mb-4">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          onClick={() => handleRating(name, star)}
-                          className="focus:outline-none"
-                        >
-                          <Star
-                            className={`h-5 w-5 sm:h-6 sm:w-6 ${
-                              star <= (name.rating || 0)
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        </button>
-                      ))}
+                    <div className="mb-4">
+                      <p className="text-sm text-gray-600 font-medium mb-2">Rate this name:</p>
+                      <div className="flex items-center gap-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            onClick={() => handleRating(name, star)}
+                            onMouseEnter={(e) => {
+                              // Preview effect on hover
+                              const stars = e.currentTarget.parentElement?.querySelectorAll('button')
+                              stars?.forEach((s, i) => {
+                                const starIcon = s.querySelector('svg')
+                                if (starIcon && i < star) {
+                                  starIcon.classList.add('fill-yellow-300', 'text-yellow-300')
+                                  starIcon.classList.remove('text-gray-300')
+                                }
+                              })
+                            }}
+                            onMouseLeave={(e) => {
+                              // Reset to actual rating
+                              const stars = e.currentTarget.parentElement?.querySelectorAll('button')
+                              stars?.forEach((s, i) => {
+                                const starIcon = s.querySelector('svg')
+                                if (starIcon) {
+                                  if (i < (name.rating || 0)) {
+                                    starIcon.classList.add('fill-yellow-400', 'text-yellow-400')
+                                    starIcon.classList.remove('text-gray-300', 'fill-yellow-300', 'text-yellow-300')
+                                  } else {
+                                    starIcon.classList.remove('fill-yellow-400', 'text-yellow-400', 'fill-yellow-300', 'text-yellow-300')
+                                    starIcon.classList.add('text-gray-300')
+                                  }
+                                }
+                              })
+                            }}
+                            className="focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 rounded-sm transition-all hover:scale-110 active:scale-95 p-1"
+                            title={`Rate ${star} star${star > 1 ? 's' : ''}`}
+                          >
+                            <Star
+                              className={`h-7 w-7 sm:h-8 sm:w-8 transition-all ${
+                                star <= (name.rating || 0)
+                                  ? 'fill-yellow-400 text-yellow-400'
+                                  : 'text-gray-300 hover:text-yellow-200'
+                              }`}
+                            />
+                          </button>
+                        ))}
+                        {name.rating && name.rating > 0 && (
+                          <button
+                            onClick={() => handleRating(name, 0)}
+                            className="ml-2 text-xs text-gray-500 hover:text-gray-700 underline"
+                          >
+                            Clear
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <button
