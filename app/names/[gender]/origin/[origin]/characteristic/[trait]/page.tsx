@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getCharacteristicInfo, getAllCharacteristicSlugs } from '@/lib/seo/characteristics';
-import { ORIGINS, GENDER_LABELS, ORIGIN_LABELS } from '@/lib/seo/constants';
+import { ORIGINS, GENDER_LABELS, GENDER_DB_MAP, ORIGIN_LABELS } from '@/lib/seo/constants';
 import SEOPageLayout from '@/components/seo/SEOPageLayout';
 import NameGrid from '@/components/seo/NameGrid';
 import InternalLinks from '@/components/seo/InternalLinks';
@@ -10,7 +10,7 @@ import { generateCollectionPage } from '@/lib/seo/structured-data';
 
 interface PageProps {
   params: Promise<{
-    gender: 'male' | 'female';
+    gender: 'boy' | 'girl' | 'unisex';
     origin: string;
     trait: string;
   }>;
@@ -19,7 +19,7 @@ interface PageProps {
 // Generate static params for all gender/origin/characteristic combinations
 export async function generateStaticParams() {
   const traits = getAllCharacteristicSlugs();
-  const genders: Array<'male' | 'female'> = ['male', 'female'];
+  const genders: Array<'boy' | 'girl' | 'unisex'> = ['boy', 'girl', 'unisex'];
   
   const params = [];
   for (const gender of genders) {
@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const charInfo = getCharacteristicInfo(trait);
   const originLabel = ORIGIN_LABELS[origin];
 
-  if (!charInfo || !originLabel || !['male', 'female'].includes(gender)) {
+  if (!charInfo || !originLabel || !['boy', 'girl', 'unisex'].includes(gender)) {
     return {
       title: 'Page Not Found',
     };
@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const genderLabel = GENDER_LABELS[gender];
   const title = `${charInfo.title.replace('Baby Names', '')}${originLabel} ${genderLabel} Names`;
-  const description = `Discover ${trait} ${originLabel.toLowerCase()} ${genderLabel.toLowerCase()} names. Perfect ${origin} names for your baby ${gender === 'male' ? 'boy' : 'girl'} with ${trait} qualities.`;
+  const description = `Discover ${trait} ${originLabel.toLowerCase()} ${genderLabel.toLowerCase()} names. Perfect ${origin} names for your baby ${gender === 'boy' ? 'boy' : gender === 'girl' ? 'girl' : 'child'} with ${trait} qualities.`;
 
   return {
     title: `${title} - AI Baby Namer`,
@@ -76,17 +76,20 @@ export default async function GenderOriginCharacteristicPage({ params }: PagePro
   const charInfo = getCharacteristicInfo(trait);
   const originLabel = ORIGIN_LABELS[origin];
 
-  if (!charInfo || !originLabel || !['male', 'female'].includes(gender)) {
+  if (!charInfo || !originLabel || !['boy', 'girl', 'unisex'].includes(gender)) {
     notFound();
   }
 
   const supabase = await createClient();
+  
+  // Map URL gender to database gender
+  const dbGender = GENDER_DB_MAP[gender];
 
   // Query names with this gender, origin, and characteristic
   const { data: names, error } = await supabase
     .from('names')
     .select('*')
-    .eq('gender', gender)
+    .eq('gender', dbGender)
     .eq('origin', origin)
     .contains('characteristics', [trait])
     .order('popularity_score', { ascending: false })
@@ -117,7 +120,7 @@ export default async function GenderOriginCharacteristicPage({ params }: PagePro
       
       <SEOPageLayout
         title={title}
-        description={`Browse our curated collection of ${trait} ${originLabel.toLowerCase()} names perfect for your baby ${gender === 'male' ? 'boy' : 'girl'}.`}
+        description={`Browse our curated collection of ${trait} ${originLabel.toLowerCase()} names perfect for your baby ${gender === 'boy' ? 'boy' : gender === 'girl' ? 'girl' : 'child'}.`}
         breadcrumbs={[
           { name: 'Names', url: '/names' },
           { name: `${genderLabel} Names`, url: `/names/${gender}` },
@@ -132,8 +135,8 @@ export default async function GenderOriginCharacteristicPage({ params }: PagePro
             Why Choose {charInfo.title.replace('Baby Names', '')}from {originLabel}?
           </h2>
           <div className="prose max-w-none">
-            <p className="text-lg text-gray-700 mb-4">
-              Looking for the perfect {trait} {originLabel.toLowerCase()} name for your {gender === 'male' ? 'son' : 'daughter'}? 
+          <p className="text-lg text-gray-700 mb-4">
+              Looking for the perfect {trait} {originLabel.toLowerCase()} name for your {gender === 'boy' ? 'son' : gender === 'girl' ? 'daughter' : 'child'}? 
               This unique combination brings together the {trait} qualities you desire with the rich cultural heritage of {originLabel} naming traditions.
             </p>
             <p className="text-gray-600 mb-4">
@@ -210,12 +213,12 @@ export default async function GenderOriginCharacteristicPage({ params }: PagePro
             </div>
             <div>
               <h3 className="text-lg font-semibold mb-2">
-                Can I find {gender === 'male' ? 'girl' : 'boy'} names with the same qualities?
+                Can I find {gender === 'boy' ? 'girl' : 'boy'} names with the same qualities?
               </h3>
               <p className="text-gray-700">
-                Yes! Visit our <a href={`/names/${gender === 'male' ? 'female' : 'male'}/origin/${origin}/characteristic/${trait}`} className="text-indigo-600 hover:underline">
-                {trait} {originLabel} {gender === 'male' ? 'girl' : 'boy'} names
-                </a> page to explore {trait} {originLabel} names for {gender === 'male' ? 'girls' : 'boys'}.
+                Yes! Visit our <a href={`/names/${gender === 'boy' ? 'girl' : 'boy'}/origin/${origin}/characteristic/${trait}`} className="text-indigo-600 hover:underline">
+                {trait} {originLabel} {gender === 'boy' ? 'girl' : 'boy'} names
+                </a> page to explore {trait} {originLabel} names for {gender === 'boy' ? 'girls' : 'boys'}.
               </p>
             </div>
           </div>

@@ -30,6 +30,13 @@ export const MEANINGS: Record<string, MeaningInfo> = {
     keywords: ['names meaning strong', 'strong baby names', 'names that mean strength', 'powerful names'],
     relatedMeanings: ['brave', 'warrior', 'noble', 'protector']
   },
+  strength: {
+    slug: 'strength',
+    title: 'Names Meaning Strength',
+    description: 'Find powerful baby names that mean strength, strong, and mighty. Ideal for parents seeking names that convey courage and resilience.',
+    keywords: ['names meaning strength', 'strength baby names', 'names that mean strong', 'powerful names'],
+    relatedMeanings: ['brave', 'warrior', 'noble', 'protector']
+  },
   brave: {
     slug: 'brave',
     title: 'Names Meaning Brave',

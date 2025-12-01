@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getCharacteristicInfo, getAllCharacteristicSlugs } from '@/lib/seo/characteristics';
-import { ORIGINS, ORIGIN_LABELS } from '@/lib/seo/constants';
+import { ORIGINS, ORIGIN_LABELS, GENDERS } from '@/lib/seo/constants';
 import SEOPageLayout from '@/components/seo/SEOPageLayout';
 import NameGrid from '@/components/seo/NameGrid';
 import InternalLinks from '@/components/seo/InternalLinks';
