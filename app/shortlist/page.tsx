@@ -21,6 +21,11 @@ export default function ShortlistPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedNames, setSelectedNames] = useState<Set<string>>(new Set())
   const [sortBy, setSortBy] = useState('name')
+  const [showListModal, setShowListModal] = useState(false)
+  const [userLists, setUserLists] = useState<any[]>([])
+  const [newListName, setNewListName] = useState('')
+  const [creatingList, setCreatingList] = useState(false)
+  const [addingToList, setAddingToList] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -192,12 +197,109 @@ export default function ShortlistPage() {
     toast('Share functionality coming soon!')
   }
 
-  const handleAddToList = () => {
+  const handleAddToList = async () => {
     if (selectedNames.size === 0) {
       toast.error('Please select names to add to a list')
       return
     }
-    router.push('/lists')
+
+    // Load user's lists
+    try {
+      const { data: lists, error } = await supabase
+        .from('lists')
+        .select('id, name, description')
+        .eq('owner_id', user!.id)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setUserLists(lists || [])
+      setShowListModal(true)
+    } catch (error) {
+      console.error('Error loading lists:', error)
+      toast.error('Failed to load lists')
+    }
+  }
+
+  const handleCreateNewList = async () => {
+    if (!newListName.trim()) {
+      toast.error('Please enter a list name')
+      return
+    }
+
+    setCreatingList(true)
+    try {
+      // Create new list
+      const { data: newList, error: listError } = await supabase
+        .from('lists')
+        .insert({
+          owner_id: user!.id,
+          name: newListName,
+          description: null,
+          is_public: false,
+        })
+        .select()
+        .single()
+
+      if (listError) throw listError
+
+      // Add owner as member
+      await supabase.from('list_members').insert({
+        list_id: newList.id,
+        user_id: user!.id,
+        role: 'owner',
+      })
+
+      // Add selected names to the new list
+      await addNamesToList(newList.id)
+      
+      setNewListName('')
+      toast.success('List created and names added!')
+      setShowListModal(false)
+      setSelectedNames(new Set())
+    } catch (error) {
+      console.error('Error creating list:', error)
+      toast.error('Failed to create list')
+    } finally {
+      setCreatingList(false)
+    }
+  }
+
+  const addNamesToList = async (listId: string) => {
+    setAddingToList(true)
+    try {
+      const selectedNamesArray = Array.from(selectedNames)
+      
+      for (const nameName of selectedNamesArray) {
+        // Get name ID
+        const { data: nameRecord } = await supabase
+          .from('names')
+          .select('id')
+          .eq('name', nameName)
+          .single()
+
+        if (!nameRecord) continue
+
+        // Add to list (ignore if already exists)
+        await supabase.from('list_names').insert({
+          list_id: listId,
+          name_id: nameRecord.id,
+          added_by: user!.id,
+        }).select()
+      }
+
+      toast.success(`${selectedNamesArray.length} name${selectedNamesArray.length > 1 ? 's' : ''} added to list!`)
+      setShowListModal(false)
+      setSelectedNames(new Set())
+    } catch (error: any) {
+      if (error.code === '23505') {
+        toast.error('Some names were already in the list')
+      } else {
+        console.error('Error adding names:', error)
+        toast.error('Failed to add names to list')
+      }
+    } finally {
+      setAddingToList(false)
+    }
   }
 
   const filteredNames = shortlist.filter(name =>
@@ -427,6 +529,79 @@ export default function ShortlistPage() {
                   className="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-colors"
                 >
                   Generate Names
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Add to List Modal */}
+          {showListModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-lg max-w-md w-full p-6 max-h-[80vh] overflow-y-auto">
+                <h2 className="text-2xl font-bold mb-4">
+                  Add {selectedNames.size} name{selectedNames.size > 1 ? 's' : ''} to list
+                </h2>
+
+                {/* Create New List Section */}
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                  <h3 className="font-semibold mb-3">Create New List</h3>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newListName}
+                      onChange={(e) => setNewListName(e.target.value)}
+                      placeholder="Enter list name..."
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleCreateNewList()
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={handleCreateNewList}
+                      disabled={creatingList || !newListName.trim()}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 transition-colors text-sm font-medium"
+                    >
+                      {creatingList ? 'Creating...' : 'Create'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Existing Lists Section */}
+                <div>
+                  <h3 className="font-semibold mb-3">Or add to existing list:</h3>
+                  {userLists.length === 0 ? (
+                    <p className="text-gray-500 text-sm text-center py-4">
+                      No lists yet. Create your first one above!
+                    </p>
+                  ) : (
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {userLists.map((list) => (
+                        <button
+                          key={list.id}
+                          onClick={() => addNamesToList(list.id)}
+                          disabled={addingToList}
+                          className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                        >
+                          <div className="font-medium">{list.name}</div>
+                          {list.description && (
+                            <div className="text-sm text-gray-500 mt-1">{list.description}</div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => {
+                    setShowListModal(false)
+                    setNewListName('')
+                  }}
+                  className="w-full mt-6 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
                 </button>
               </div>
             </div>
