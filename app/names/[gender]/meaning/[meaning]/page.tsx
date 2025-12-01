@@ -6,11 +6,11 @@ import SEOPageLayout from '@/components/seo/SEOPageLayout';
 import NameGrid from '@/components/seo/NameGrid';
 import InternalLinks from '@/components/seo/InternalLinks';
 import { generateMeaningSchema } from '@/lib/seo/structured-data';
-import { GENDER_LABELS } from '@/lib/seo/constants';
+import { GENDER_LABELS, GENDER_DB_MAP } from '@/lib/seo/constants';
 
 interface PageProps {
   params: Promise<{
-    gender: 'male' | 'female';
+    gender: 'boy' | 'girl' | 'unisex';
     meaning: string;
   }>;
 }
@@ -18,7 +18,7 @@ interface PageProps {
 // Generate static params for all gender/meaning combinations
 export async function generateStaticParams() {
   const meanings = getAllMeaningSlugs();
-  const genders: Array<'male' | 'female'> = ['male', 'female'];
+  const genders: Array<'boy' | 'girl' | 'unisex'> = ['boy', 'girl', 'unisex'];
   
   const params = [];
   for (const gender of genders) {
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { gender, meaning } = await params;
   const meaningInfo = getMeaningInfo(meaning);
 
-  if (!meaningInfo || !['male', 'female'].includes(gender)) {
+  if (!meaningInfo || !['boy', 'girl', 'unisex'].includes(gender)) {
     return {
       title: 'Page Not Found',
     };
@@ -66,17 +66,20 @@ export default async function GenderMeaningPage({ params }: PageProps) {
   const { gender, meaning } = await params;
   const meaningInfo = getMeaningInfo(meaning);
 
-  if (!meaningInfo || !['male', 'female'].includes(gender)) {
+  if (!meaningInfo || !['boy', 'girl', 'unisex'].includes(gender)) {
     notFound();
   }
 
   const supabase = await createClient();
+  
+  // Map URL gender to database gender
+  const dbGender = GENDER_DB_MAP[gender];
 
   // Fetch names with this meaning and gender
-  const { data: names, error } = await supabase
+  const { data: names, error} = await supabase
     .from('names')
     .select('*')
-    .eq('gender', gender)
+    .eq('gender', dbGender)
     .ilike('meaning', `%${meaning}%`)
     .order('popularity_score', { ascending: false })
     .limit(100);
@@ -106,7 +109,7 @@ export default async function GenderMeaningPage({ params }: PageProps) {
       
       <SEOPageLayout
         title={title}
-        description={`Discover beautiful ${genderLabel.toLowerCase()} baby names that mean ${meaning}. Perfect for parents looking for meaningful ${gender} names.`}
+        description={`Discover beautiful ${genderLabel.toLowerCase()} baby names that mean ${meaning}. Perfect for parents looking for meaningful ${genderLabel.toLowerCase()} names.`}
         breadcrumbs={[
           { name: 'Names', url: '/names' },
           { name: `${genderLabel} Names`, url: `/names/${gender}` },
@@ -124,8 +127,8 @@ export default async function GenderMeaningPage({ params }: PageProps) {
               Looking for {genderLabel.toLowerCase()} baby names that mean {meaning}? {meaningInfo.description}
             </p>
             <p className="text-gray-600 mb-4">
-              Choosing a {gender} name with a meaningful significance can add depth and intention to your {gender === 'male' ? 'son' : 'daughter'}'s identity. 
-              Names that mean "{meaning}" carry special symbolism and can reflect the values and hopes you have for your little {gender === 'male' ? 'boy' : 'girl'}.
+              Choosing a {genderLabel.toLowerCase()} name with a meaningful significance can add depth and intention to your {gender === 'boy' ? 'son' : gender === 'girl' ? 'daughter' : 'child'}'s identity. 
+              Names that mean "{meaning}" carry special symbolism and can reflect the values and hopes you have for your little {gender === 'boy' ? 'boy' : gender === 'girl' ? 'girl' : 'one'}.
             </p>
             <p className="text-gray-600">
               Below you'll find a curated collection of {namesList.length} beautiful {genderLabel.toLowerCase()} names that mean or relate to "{meaning}". 
@@ -185,10 +188,10 @@ export default async function GenderMeaningPage({ params }: PageProps) {
             </div>
             <div>
               <h3 className="text-lg font-semibold mb-2">
-                Can I find {gender === 'male' ? 'girl' : 'boy'} names meaning {meaning} too?
+                Can I find {gender === 'boy' ? 'girl' : 'boy'} names meaning {meaning} too?
               </h3>
               <p className="text-gray-700">
-                Yes! We have collections for both boy and girl names. Check out our <a href={`/names/${gender === 'male' ? 'female' : 'male'}/meaning/${meaning}`} className="text-indigo-600 hover:underline">{gender === 'male' ? 'girl' : 'boy'} names meaning {meaning}</a> or view <a href={`/names/meaning/${meaning}`} className="text-indigo-600 hover:underline">all names meaning {meaning}</a>.
+                Yes! We have collections for both boy and girl names. Check out our <a href={`/names/${gender === 'boy' ? 'girl' : 'boy'}/meaning/${meaning}`} className="text-indigo-600 hover:underline">{gender === 'boy' ? 'girl' : 'boy'} names meaning {meaning}</a> or view <a href={`/names/meaning/${meaning}`} className="text-indigo-600 hover:underline">all names meaning {meaning}</a>.
               </p>
             </div>
           </div>
@@ -206,16 +209,16 @@ export default async function GenderMeaningPage({ params }: PageProps) {
         {/* Cross-Gender Link */}
         <div className="mt-8 p-6 bg-indigo-50 rounded-lg border border-indigo-200">
           <h3 className="text-lg font-semibold mb-2">
-            Looking for {gender === 'male' ? 'Girl' : 'Boy'} Names?
+            Looking for {gender === 'boy' ? 'Girl' : 'Boy'} Names?
           </h3>
           <p className="text-gray-700 mb-3">
-            Browse our collection of {gender === 'male' ? 'female' : 'male'} names meaning {meaning}.
+            Browse our collection of {gender === 'boy' ? 'girl' : 'boy'} names meaning {meaning}.
           </p>
           <a 
-            href={`/names/${gender === 'male' ? 'female' : 'male'}/meaning/${meaning}`}
+            href={`/names/${gender === 'boy' ? 'girl' : 'boy'}/meaning/${meaning}`}
             className="inline-block bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
           >
-            View {gender === 'male' ? 'Girl' : 'Boy'} Names Meaning {meaning.charAt(0).toUpperCase() + meaning.slice(1)}
+            View {gender === 'boy' ? 'Girl' : 'Boy'} Names Meaning {meaning.charAt(0).toUpperCase() + meaning.slice(1)}
           </a>
         </div>
       </SEOPageLayout>

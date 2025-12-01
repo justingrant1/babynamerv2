@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getLengthInfo, getAllLengthSlugs } from '@/lib/seo/syllables';
-import { GENDER_LABELS } from '@/lib/seo/constants';
+import { GENDER_LABELS, GENDER_DB_MAP } from '@/lib/seo/constants';
 import SEOPageLayout from '@/components/seo/SEOPageLayout';
 import NameGrid from '@/components/seo/NameGrid';
 import InternalLinks from '@/components/seo/InternalLinks';
@@ -10,7 +10,7 @@ import { generateCollectionPage } from '@/lib/seo/structured-data';
 
 interface PageProps {
   params: Promise<{
-    gender: 'male' | 'female';
+    gender: 'boy' | 'girl' | 'unisex';
     slug: string;
   }>;
 }
@@ -18,7 +18,7 @@ interface PageProps {
 // Generate static params for all gender/length combinations
 export async function generateStaticParams() {
   const slugs = getAllLengthSlugs();
-  const genders: Array<'male' | 'female'> = ['male', 'female'];
+  const genders: Array<'boy' | 'girl' | 'unisex'> = ['boy', 'girl', 'unisex'];
   
   const params = [];
   for (const gender of genders) {
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { gender, slug } = await params;
   const lengthInfo = getLengthInfo(slug);
 
-  if (!lengthInfo || !['male', 'female'].includes(gender)) {
+  if (!lengthInfo || !['boy', 'girl', 'unisex'].includes(gender)) {
     return {
       title: 'Page Not Found',
     };
@@ -66,14 +66,17 @@ export default async function GenderLengthPage({ params }: PageProps) {
   const { gender, slug } = await params;
   const lengthInfo = getLengthInfo(slug);
 
-  if (!lengthInfo || !['male', 'female'].includes(gender)) {
+  if (!lengthInfo || !['boy', 'girl', 'unisex'].includes(gender)) {
     notFound();
   }
 
   const supabase = await createClient();
+  
+  // Map URL gender to database gender
+  const dbGender = GENDER_DB_MAP[gender];
 
   // Build query based on gender and length category
-  let query = supabase.from('names').select('*').eq('gender', gender);
+  let query = supabase.from('names').select('*').eq('gender', dbGender);
   
   if (lengthInfo.minLength && lengthInfo.maxLength) {
     query = query.gte('name_length', lengthInfo.minLength).lte('name_length', lengthInfo.maxLength);
@@ -110,7 +113,7 @@ export default async function GenderLengthPage({ params }: PageProps) {
       
       <SEOPageLayout
         title={title}
-        description={`Find ${genderLabel.toLowerCase()} ${lengthInfo.title.toLowerCase()}. Perfect for your baby ${gender === 'male' ? 'boy' : 'girl'}.`}
+        description={`Find ${genderLabel.toLowerCase()} ${lengthInfo.title.toLowerCase()}. Perfect for your baby ${gender === 'boy' ? 'boy' : gender === 'girl' ? 'girl' : 'child'}.`}
         breadcrumbs={[
           { name: 'Names', url: '/names' },
           { name: `${genderLabel} Names`, url: `/names/${gender}` },
@@ -129,7 +132,7 @@ export default async function GenderLengthPage({ params }: PageProps) {
             </p>
             <p className="text-gray-600">
               Below you'll find {namesList.length} {slug} {genderLabel.toLowerCase()} names from various origins. 
-              Each name is curated to help you find the perfect {slug}-length name for your {gender === 'male' ? 'son' : 'daughter'}.
+              Each name is curated to help you find the perfect {slug}-length name for your {gender === 'boy' ? 'son' : gender === 'girl' ? 'daughter' : 'child'}.
             </p>
           </div>
         </div>

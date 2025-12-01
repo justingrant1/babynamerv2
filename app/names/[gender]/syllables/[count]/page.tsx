@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getSyllableInfo, getAllSyllableCounts } from '@/lib/seo/syllables';
-import { GENDER_LABELS } from '@/lib/seo/constants';
+import { GENDER_LABELS, GENDER_DB_MAP } from '@/lib/seo/constants';
 import SEOPageLayout from '@/components/seo/SEOPageLayout';
 import NameGrid from '@/components/seo/NameGrid';
 import InternalLinks from '@/components/seo/InternalLinks';
@@ -10,7 +10,7 @@ import { generateCollectionPage } from '@/lib/seo/structured-data';
 
 interface PageProps {
   params: Promise<{
-    gender: 'male' | 'female';
+    gender: 'boy' | 'girl' | 'unisex';
     count: string;
   }>;
 }
@@ -18,7 +18,7 @@ interface PageProps {
 // Generate static params for all gender/syllable combinations
 export async function generateStaticParams() {
   const counts = getAllSyllableCounts();
-  const genders: Array<'male' | 'female'> = ['male', 'female'];
+  const genders: Array<'boy' | 'girl' | 'unisex'> = ['boy', 'girl', 'unisex'];
   
   const params = [];
   for (const gender of genders) {
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { gender, count } = await params;
   const syllableInfo = getSyllableInfo(count);
 
-  if (!syllableInfo || !['male', 'female'].includes(gender)) {
+  if (!syllableInfo || !['boy', 'girl', 'unisex'].includes(gender)) {
     return {
       title: 'Page Not Found',
     };
@@ -66,17 +66,20 @@ export default async function GenderSyllablePage({ params }: PageProps) {
   const { gender, count } = await params;
   const syllableInfo = getSyllableInfo(count);
 
-  if (!syllableInfo || !['male', 'female'].includes(gender)) {
+  if (!syllableInfo || !['boy', 'girl', 'unisex'].includes(gender)) {
     notFound();
   }
 
   const supabase = await createClient();
+  
+  // Map URL gender to database gender
+  const dbGender = GENDER_DB_MAP[gender];
 
   // Fetch names with this gender and syllable count
   const { data: names, error } = await supabase
     .from('names')
     .select('*')
-    .eq('gender', gender)
+    .eq('gender', dbGender)
     .eq('syllable_count', parseInt(count))
     .order('popularity_score', { ascending: false })
     .limit(200);
@@ -107,7 +110,7 @@ export default async function GenderSyllablePage({ params }: PageProps) {
       
       <SEOPageLayout
         title={title}
-        description={`Find beautiful ${genderLabel.toLowerCase()} baby names with ${count} syllable${count !== '1' ? 's' : ''}. Perfect for your baby ${gender === 'male' ? 'boy' : 'girl'}.`}
+        description={`Find beautiful ${genderLabel.toLowerCase()} baby names with ${count} syllable${count !== '1' ? 's' : ''}. Perfect for your baby ${gender === 'boy' ? 'boy' : gender === 'girl' ? 'girl' : 'child'}.`}
         breadcrumbs={[
           { name: 'Names', url: '/names' },
           { name: `${genderLabel} Names`, url: `/names/${gender}` },
@@ -125,14 +128,14 @@ export default async function GenderSyllablePage({ params }: PageProps) {
               Looking for {genderLabel.toLowerCase()} baby names with {count} syllable{count !== '1' ? 's' : ''}? {syllableInfo.description}
             </p>
             <p className="text-gray-600 mb-4">
-              {count === '1' && `One syllable ${gender} names are strong and memorable. Perfect for ${gender === 'male' ? 'boys' : 'girls'} and work especially well with longer surnames.`}
+              {count === '1' && `One syllable ${gender} names are strong and memorable. Perfect for ${gender === 'boy' ? 'boys' : gender === 'girl' ? 'girls' : 'children'} and work especially well with longer surnames.`}
               {count === '2' && `Two syllable ${gender} names strike the perfect balance. These ${genderLabel.toLowerCase()} names are versatile and work beautifully with most surnames.`}
               {count === '3' && `Three syllable ${gender} names have an elegant flow. These ${genderLabel.toLowerCase()} names sound sophisticated and distinguished.`}
               {count === '4' && `Four syllable ${gender} names are distinctive and memorable. These longer ${genderLabel.toLowerCase()} names often have rich cultural significance.`}
             </p>
             <p className="text-gray-600">
               Below you'll find {namesList.length} {syllableWord}-syllable {genderLabel.toLowerCase()} names from various origins. 
-              Each name is carefully selected to help you find the perfect {count}-syllable name for your {gender === 'male' ? 'son' : 'daughter'}.
+              Each name is carefully selected to help you find the perfect {count}-syllable name for your {gender === 'boy' ? 'son' : gender === 'girl' ? 'daughter' : 'child'}.
             </p>
           </div>
         </div>
@@ -170,10 +173,10 @@ export default async function GenderSyllablePage({ params }: PageProps) {
             </div>
             <div>
               <h3 className="text-lg font-semibold mb-2">
-                Can I find {gender === 'male' ? 'girl' : 'boy'} names with {count} syllable{count !== '1' ? 's' : ''} too?
+                Can I find {gender === 'boy' ? 'girl' : 'boy'} names with {count} syllable{count !== '1' ? 's' : ''} too?
               </h3>
               <p className="text-gray-700">
-                Yes! Visit our <a href={`/names/${gender === 'male' ? 'female' : 'male'}/syllables/${count}`} className="text-indigo-600 hover:underline">{gender === 'male' ? 'girl' : 'boy'} names with {count} syllable{count !== '1' ? 's' : ''}</a> page.
+                Yes! Visit our <a href={`/names/${gender === 'boy' ? 'girl' : 'boy'}/syllables/${count}`} className="text-indigo-600 hover:underline">{gender === 'boy' ? 'girl' : 'boy'} names with {count} syllable{count !== '1' ? 's' : ''}</a> page.
               </p>
             </div>
           </div>
