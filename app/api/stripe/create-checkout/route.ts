@@ -28,7 +28,7 @@ export async function POST(request: Request) {
         ],
         mode: 'subscription',
         success_url: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/auth/signup?canceled=true`,
+        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
         metadata: {
           signup_email: email,
           mode: 'signup',
@@ -89,8 +89,8 @@ export async function POST(request: Request) {
         },
       ],
       mode: 'subscription',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing?canceled=true`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing?success=true`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
       metadata: {
         supabase_user_id: user.id,
         mode: 'upgrade',

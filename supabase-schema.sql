@@ -110,6 +110,9 @@ CREATE TABLE IF NOT EXISTS public.list_names (
   list_id UUID NOT NULL REFERENCES public.lists(id) ON DELETE CASCADE,
   name_id UUID NOT NULL REFERENCES public.names(id) ON DELETE CASCADE,
   added_by UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  notes TEXT,
+  rating INTEGER CHECK (rating >= 0 AND rating <= 5) DEFAULT 0,
+  is_winner BOOLEAN DEFAULT FALSE,
   added_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(list_id, name_id)
 );
@@ -296,6 +299,16 @@ CREATE POLICY "Editors can add names to lists" ON public.list_names
 
 CREATE POLICY "Editors can remove names from lists" ON public.list_names
   FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM public.list_members
+      WHERE list_id = list_names.list_id
+      AND user_id = auth.uid()
+      AND role IN ('owner', 'editor')
+    )
+  );
+
+CREATE POLICY "Editors can update names in lists" ON public.list_names
+  FOR UPDATE USING (
     EXISTS (
       SELECT 1 FROM public.list_members
       WHERE list_id = list_names.list_id
