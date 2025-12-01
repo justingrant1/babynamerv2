@@ -14,6 +14,8 @@ import {
   Heart,
   Settings,
   Pencil,
+  Star,
+  Crown,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'react-hot-toast'
@@ -30,6 +32,12 @@ interface ListMember {
   }
 }
 
+interface ListNameWithRating extends NameData {
+  list_name_id: string
+  rating?: number
+  is_winner?: boolean
+}
+
 export default function ListDetailPage() {
   const { user, isPremium, loading: authLoading } = useAuth()
   const router = useRouter()
@@ -37,7 +45,7 @@ export default function ListDetailPage() {
   const listId = params.id as string
   
   const [list, setList] = useState<any>(null)
-  const [names, setNames] = useState<NameData[]>([])
+  const [names, setNames] = useState<ListNameWithRating[]>([])
   const [members, setMembers] = useState<ListMember[]>([])
   const [shortlist, setShortlist] = useState<NameData[]>([])
   const [loading, setLoading] = useState(true)
@@ -87,12 +95,14 @@ export default function ListDetailPage() {
 
       setUserRole(memberData?.role || 'viewer')
 
-      // Get list names
+      // Get list names with ratings
       const { data: listNames, error: namesError } = await supabase
         .from('list_names')
         .select(`
           id,
           notes,
+          rating,
+          is_winner,
           names (
             name,
             gender,
@@ -106,8 +116,13 @@ export default function ListDetailPage() {
       if (namesError) throw namesError
 
       const namesList = listNames
-        ?.map((item: any) => item.names)
-        .filter(Boolean) as NameData[]
+        ?.map((item: any) => ({
+          ...item.names,
+          list_name_id: item.id,
+          rating: item.rating || 0,
+          is_winner: item.is_winner || false,
+        }))
+        .filter(Boolean) as ListNameWithRating[]
       setNames(namesList || [])
 
       // Get list members
@@ -189,28 +204,70 @@ export default function ListDetailPage() {
     }
   }
 
-  const handleRemoveNameFromList = async (name: NameData) => {
+  const handleRating = async (name: ListNameWithRating, rating: number) => {
+    if (userRole === 'viewer') {
+      toast.error('You do not have permission to rate names')
+      return
+    }
+
+    try {
+      await supabase
+        .from('list_names')
+        .update({ rating })
+        .eq('id', name.list_name_id)
+
+      setNames(names.map(item => 
+        item.name === name.name ? { ...item, rating } : item
+      ))
+    } catch (error) {
+      console.error('Error updating rating:', error)
+      toast.error('Failed to update rating')
+    }
+  }
+
+  const handleSelectWinner = async (name: ListNameWithRating) => {
+    if (userRole === 'viewer') {
+      toast.error('You do not have permission to select a winner')
+      return
+    }
+
+    try {
+      // Clear all winners first
+      await supabase
+        .from('list_names')
+        .update({ is_winner: false })
+        .eq('list_id', listId)
+
+      // Set this name as winner
+      await supabase
+        .from('list_names')
+        .update({ is_winner: true })
+        .eq('id', name.list_name_id)
+
+      setNames(names.map(item => ({
+        ...item,
+        is_winner: item.name === name.name
+      })))
+
+      toast.success(`${name.name} selected as the winner! 🎉`)
+    } catch (error) {
+      console.error('Error selecting winner:', error)
+      toast.error('Failed to select winner')
+    }
+  }
+
+  const handleRemoveNameFromList = async (name: ListNameWithRating) => {
     if (userRole === 'viewer') {
       toast.error('You do not have permission to remove names')
       return
     }
 
     try {
-      // Get name ID
-      const { data: nameRecord } = await supabase
-        .from('names')
-        .select('id')
-        .eq('name', name.name)
-        .single()
-
-      if (!nameRecord) return
-
-      // Remove from list
+      // Remove from list using list_name_id
       await supabase
         .from('list_names')
         .delete()
-        .eq('list_id', listId)
-        .eq('name_id', nameRecord.id)
+        .eq('id', name.list_name_id)
 
       toast.success(`${name.name} removed from list`)
       loadListData()
@@ -344,29 +401,93 @@ export default function ListDetailPage() {
           {names.length === 0 ? (
             <p className="text-gray-600 text-center py-8">No names in this list yet</p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {names.map((name, index) => (
                 <div
                   key={index}
-                  className="flex justify-between items-start p-3 border border-gray-200 rounded-lg"
+                  className={`p-4 border-2 rounded-lg transition-all ${
+                    name.is_winner 
+                      ? 'border-yellow-400 bg-yellow-50' 
+                      : 'border-gray-200 bg-white'
+                  }`}
                 >
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-indigo-600">{name.name}</h3>
-                    <div className="text-sm text-gray-600 mt-1">
-                      <span className="capitalize">{name.gender}</span>
-                      {name.origin && <span> • {name.origin}</span>}
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-xl font-semibold text-indigo-600">{name.name}</h3>
+                        {name.is_winner && (
+                          <span title="Winner!">
+                            <Crown className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        <span className="capitalize">{name.gender}</span>
+                        {name.origin && <span> • {name.origin}</span>}
+                      </div>
+                      {name.meaning && (
+                        <p className="text-sm text-gray-500 mt-1">{name.meaning}</p>
+                      )}
                     </div>
-                    {name.meaning && (
-                      <p className="text-sm text-gray-500 mt-1">{name.meaning}</p>
+                    {userRole !== 'viewer' && (
+                      <button
+                        onClick={() => handleRemoveNameFromList(name)}
+                        className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
                     )}
                   </div>
+
+                  {/* Star Rating */}
                   {userRole !== 'viewer' && (
+                    <div className="mb-3">
+                      <p className="text-xs text-gray-600 font-medium mb-2">Rate this name:</p>
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            onClick={() => handleRating(name, star)}
+                            className="focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 rounded-sm transition-all hover:scale-110 active:scale-95 p-1"
+                            title={`Rate ${star} star${star > 1 ? 's' : ''}`}
+                          >
+                            <Star
+                              className={`h-5 w-5 transition-all ${
+                                star <= (name.rating || 0)
+                                  ? 'fill-yellow-400 text-yellow-400'
+                                  : 'text-gray-300 hover:text-yellow-200'
+                              }`}
+                            />
+                          </button>
+                        ))}
+                        {name.rating && name.rating > 0 && (
+                          <button
+                            onClick={() => handleRating(name, 0)}
+                            className="ml-2 text-xs text-gray-500 hover:text-gray-700 underline"
+                          >
+                            Clear
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Select Winner Button */}
+                  {userRole !== 'viewer' && !name.is_winner && (
                     <button
-                      onClick={() => handleRemoveNameFromList(name)}
-                      className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                      onClick={() => handleSelectWinner(name)}
+                      className="w-full px-3 py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white rounded-md hover:from-yellow-500 hover:to-yellow-600 transition-all font-semibold text-sm flex items-center justify-center gap-2"
                     >
-                      <Trash2 className="h-5 w-5" />
+                      <Crown className="h-4 w-4" />
+                      Select as Winner
                     </button>
+                  )}
+                  
+                  {name.is_winner && (
+                    <div className="w-full px-3 py-2 bg-yellow-100 text-yellow-800 rounded-md font-semibold text-sm text-center flex items-center justify-center gap-2">
+                      <Crown className="h-4 w-4 fill-yellow-600" />
+                      This is the Winner!
+                    </div>
                   )}
                 </div>
               ))}
