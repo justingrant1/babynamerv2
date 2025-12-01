@@ -47,17 +47,14 @@ export default function Navbar() {
               </>
             )}
             
-            {user && (
-              <>
-                {!isPremium && (
-                  <Link
-                    href="/pricing"
-                    className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-md hover:from-yellow-500 hover:to-orange-600 transition-all font-semibold text-sm sm:text-base shadow-lg animate-pulse"
-                  >
-                    ⭐ Upgrade
-                  </Link>
-                )}
-              </>
+            {/* Show Upgrade button for non-premium users (both logged in and logged out) */}
+            {(!user || (user && !isPremium)) && (
+              <Link
+                href="/pricing"
+                className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-md hover:from-yellow-500 hover:to-orange-600 transition-all font-semibold text-sm sm:text-base shadow-lg"
+              >
+                ⭐ {user ? 'Upgrade' : 'Get Premium'}
+              </Link>
             )}
             
             {user ? (

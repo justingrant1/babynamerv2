@@ -13,6 +13,7 @@ import {
   Loader2,
   Heart,
   Settings,
+  Pencil,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'react-hot-toast'
@@ -42,6 +43,10 @@ export default function ListDetailPage() {
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
   const [showInviteModal, setShowInviteModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editName, setEditName] = useState('')
+  const [editDescription, setEditDescription] = useState('')
+  const [updating, setUpdating] = useState(false)
   const [userRole, setUserRole] = useState<string>('viewer')
   const supabase = createClient()
 
@@ -215,6 +220,42 @@ export default function ListDetailPage() {
     toast.success('Invite link copied!')
   }
 
+  const handleEditList = () => {
+    setEditName(list?.name || '')
+    setEditDescription(list?.description || '')
+    setShowEditModal(true)
+  }
+
+  const handleUpdateList = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editName.trim()) {
+      toast.error('Please enter a list name')
+      return
+    }
+
+    setUpdating(true)
+    try {
+      const { error } = await supabase
+        .from('lists')
+        .update({
+          name: editName,
+          description: editDescription || null,
+        })
+        .eq('id', listId)
+
+      if (error) throw error
+
+      toast.success('List updated!')
+      setShowEditModal(false)
+      loadListData()
+    } catch (error) {
+      console.error('Error updating list:', error)
+      toast.error('Failed to update list')
+    } finally {
+      setUpdating(false)
+    }
+  }
+
   if (loading) {
     return (
       <>
@@ -243,8 +284,19 @@ export default function ListDetailPage() {
         </Link>
 
         <div className="flex justify-between items-start mb-8">
-          <div>
-            <h1 className="text-4xl font-bold">{list?.name}</h1>
+          <div className="flex-1">
+            <div className="flex items-center gap-3">
+              <h1 className="text-4xl font-bold">{list?.name}</h1>
+              {(userRole === 'owner' || userRole === 'editor') && (
+                <button
+                  onClick={handleEditList}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  title="Edit list details"
+                >
+                  <Pencil className="h-5 w-5 text-gray-600" />
+                </button>
+              )}
+            </div>
             {list?.description && (
               <p className="text-gray-600 mt-2">{list.description}</p>
             )}
@@ -403,6 +455,58 @@ export default function ListDetailPage() {
                   Close
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit List Modal */}
+        {showEditModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-md w-full p-6">
+              <h2 className="text-2xl font-bold mb-4">Edit List</h2>
+              <form onSubmit={handleUpdateList} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    List Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="e.g., Our Favorites"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Description (optional)
+                  </label>
+                  <textarea
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="What's this list for?"
+                    rows={3}
+                  />
+                </div>
+                <div className="flex gap-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={updating}
+                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                  >
+                    {updating ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}
