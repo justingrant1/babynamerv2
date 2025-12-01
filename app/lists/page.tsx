@@ -38,11 +38,13 @@ export default function ListsPage() {
     if (authLoading) return
 
     if (!user) {
+      setLoading(false)
       router.push('/auth/login')
       return
     }
 
     if (!isPremium) {
+      setLoading(false)
       router.push('/pricing')
       return
     }
@@ -51,6 +53,7 @@ export default function ListsPage() {
   }, [user, isPremium, authLoading])
 
   const loadLists = async () => {
+    setLoading(true)
     try {
       // Get lists where user is owner or member
       const { data: ownedLists, error: ownedError } = await supabase
@@ -66,7 +69,10 @@ export default function ListsPage() {
         .eq('owner_id', user!.id)
         .order('created_at', { ascending: false })
 
-      if (ownedError) throw ownedError
+      if (ownedError) {
+        console.error('Error loading owned lists:', ownedError)
+        throw ownedError
+      }
 
       // Get lists where user is a member
       const { data: memberLists, error: memberError } = await supabase
@@ -84,7 +90,10 @@ export default function ListsPage() {
         .eq('user_id', user!.id)
         .neq('role', 'owner')
 
-      if (memberError) throw memberError
+      if (memberError) {
+        console.error('Error loading member lists:', memberError)
+        // Don't throw here - member lists are optional
+      }
 
       // Combine and get counts for each list
       const allLists = [
@@ -116,9 +125,10 @@ export default function ListsPage() {
       )
 
       setLists(listsWithCounts)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading lists:', error)
-      toast.error('Failed to load lists')
+      toast.error(error.message || 'Failed to load lists')
+      setLists([]) // Set empty array on error
     } finally {
       setLoading(false)
     }
