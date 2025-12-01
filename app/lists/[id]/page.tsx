@@ -31,7 +31,7 @@ interface ListMember {
 }
 
 export default function ListDetailPage() {
-  const { user, isPremium } = useAuth()
+  const { user, isPremium, loading: authLoading } = useAuth()
   const router = useRouter()
   const params = useParams()
   const listId = params.id as string
@@ -46,20 +46,26 @@ export default function ListDetailPage() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [editName, setEditName] = useState('')
   const [editDescription, setEditDescription] = useState('')
+  const [editIsPublic, setEditIsPublic] = useState(false)
   const [updating, setUpdating] = useState(false)
   const [userRole, setUserRole] = useState<string>('viewer')
   const supabase = createClient()
 
   useEffect(() => {
+    // Wait for auth to finish loading
+    if (authLoading) return
+
     if (!user || !isPremium) {
+      setLoading(false)
       router.push('/pricing')
       return
     }
 
     loadListData()
-  }, [user, isPremium, listId])
+  }, [user, isPremium, authLoading, listId])
 
   const loadListData = async () => {
+    setLoading(true)
     try {
       // Get list details
       const { data: listData, error: listError } = await supabase
@@ -223,6 +229,7 @@ export default function ListDetailPage() {
   const handleEditList = () => {
     setEditName(list?.name || '')
     setEditDescription(list?.description || '')
+    setEditIsPublic(list?.is_public || false)
     setShowEditModal(true)
   }
 
@@ -240,6 +247,7 @@ export default function ListDetailPage() {
         .update({
           name: editName,
           description: editDescription || null,
+          is_public: editIsPublic,
         })
         .eq('id', listId)
 
@@ -489,6 +497,18 @@ export default function ListDetailPage() {
                     placeholder="What's this list for?"
                     rows={3}
                   />
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="edit-public"
+                    checked={editIsPublic}
+                    onChange={(e) => setEditIsPublic(e.target.checked)}
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="edit-public" className="ml-2 text-sm text-gray-700">
+                    Make this list public
+                  </label>
                 </div>
                 <div className="flex gap-3 mt-6">
                   <button

@@ -14,7 +14,7 @@ interface ShortlistItem extends NameData {
 }
 
 export default function ShortlistPage() {
-  const { user, isPremium } = useAuth()
+  const { user, isPremium, loading: authLoading } = useAuth()
   const router = useRouter()
   const [shortlist, setShortlist] = useState<ShortlistItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -24,13 +24,17 @@ export default function ShortlistPage() {
   const supabase = createClient()
 
   useEffect(() => {
+    // Wait for auth to finish loading
+    if (authLoading) return
+
     if (!user || !isPremium) {
+      setLoading(false)
       router.push('/pricing')
       return
     }
 
     loadShortlist()
-  }, [user, isPremium])
+  }, [user, isPremium, authLoading])
 
   const loadShortlist = async () => {
     if (!user) return
