@@ -220,4 +220,5 @@ export interface NameData {
   origin?: string
   meaning?: string
   characteristics?: string[]
+  popularity_score?: number
 }
