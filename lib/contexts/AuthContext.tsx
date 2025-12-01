@@ -69,9 +69,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setProfile(null)
       }
+      
+      // Ensure loading is false after auth state changes
+      setLoading(false)
     })
 
-    return () => subscription.unsubscribe()
+    // Handle window visibility changes (minimize/maximize)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Re-check session when window becomes visible
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session?.user && !user) {
+            setUser(session.user)
+            fetchProfile(session.user.id).then(setProfile)
+          }
+        })
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      subscription.unsubscribe()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [])
 
   const signOut = async () => {
