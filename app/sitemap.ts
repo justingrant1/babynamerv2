@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next'
 import { createClient } from '@/lib/supabase/server'
-import { ORIGINS, LETTERS, VALID_URL_GENDERS, RELIGIONS, MEANINGS, POPULARITY_LEVELS, SOUND_TYPES } from '@/lib/seo/constants'
+import { ORIGINS, LETTERS, VALID_URL_GENDERS, RELIGIONS, MEANINGS, POPULARITY_LEVELS } from '@/lib/seo/constants'
 import { getAllMeaningSlugs } from '@/lib/seo/meanings'
 import { getAllSyllableCounts, getAllLengthSlugs } from '@/lib/seo/syllables'
 import { getAllCharacteristicSlugs } from '@/lib/seo/characteristics'
@@ -224,7 +224,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
   
-  // Popularity pages (base + gender variants) - Phase 7
+  // Popularity pages (base only) - Phase 7
   for (const level of POPULARITY_LEVELS) {
     routes.push({
       url: `${baseUrl}/names/popularity/${level}`,
@@ -232,34 +232,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly',
       priority: 0.85,
     })
-    
-    for (const gender of VALID_URL_GENDERS) {
-      routes.push({
-        url: `${baseUrl}/names/${gender}/popularity/${level}`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly',
-        priority: 0.75,
-      })
-    }
-  }
-  
-  // Sound pages (base + gender variants) - Phase 7
-  for (const sound of SOUND_TYPES) {
-    routes.push({
-      url: `${baseUrl}/names/sound/${sound}`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    })
-    
-    for (const gender of VALID_URL_GENDERS) {
-      routes.push({
-        url: `${baseUrl}/names/${gender}/sound/${sound}`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly',
-        priority: 0.7,
-      })
-    }
   }
   
   // Individual name pages

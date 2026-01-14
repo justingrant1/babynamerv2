@@ -133,24 +133,24 @@ export const LENGTH_DESCRIPTIONS: Record<string, string> = {
 // POPULARITY (4 levels)
 // ============================================
 export const POPULARITY_LEVELS = [
-  'very-popular',
-  'moderately-popular',
-  'less-popular',
+  'popular',
+  'trending',
+  'unique',
   'rare',
 ] as const
 
 export const POPULARITY_LABELS: Record<string, string> = {
-  'very-popular': 'Very Popular',
-  'moderately-popular': 'Moderately Popular',
-  'less-popular': 'Less Popular',
+  'popular': 'Popular',
+  'trending': 'Trending',
+  'unique': 'Unique',
   'rare': 'Rare',
 }
 
 export const POPULARITY_DESCRIPTIONS: Record<string, string> = {
-  'very-popular': 'Top 10 trending baby names chosen by parents nationwide.',
-  'moderately-popular': 'Well-known baby names ranking in the top 100 nationally.',
-  'less-popular': 'Familiar baby names that are less commonly chosen (top 500).',
-  'rare': 'Distinctive baby names outside the top 500 rankings.',
+  'popular': 'Top trending baby names chosen by parents nationwide in 2025.',
+  'trending': 'Rising baby names gaining popularity this year.',
+  'unique': 'Distinctive baby names that stand out from the crowd.',
+  'rare': 'Uncommon baby names outside the top 500 rankings.',
 }
 
 // ============================================
