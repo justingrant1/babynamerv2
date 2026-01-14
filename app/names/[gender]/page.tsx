@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { GENDERS, GENDER_LABELS, GENDER_DB_MAP } from '@/lib/seo/constants'
+import { VALID_URL_GENDERS, GENDER_LABELS, GENDER_DB_MAP } from '@/lib/seo/constants'
 import { generateGenderMetadata } from '@/lib/seo/metadata'
 import { generateCompleteStructuredData, generateCharacteristicFAQs } from '@/lib/seo/structured-data'
 import SEOPageLayout from '@/components/seo/SEOPageLayout'
@@ -16,7 +16,7 @@ interface PageProps {
 }
 
 export async function generateStaticParams() {
-  return GENDERS.filter(g => g !== 'any').map((gender) => ({
+  return VALID_URL_GENDERS.map((gender) => ({
     gender,
   }))
 }
@@ -24,7 +24,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { gender } = await params
   
-  if (!GENDERS.includes(gender as any) || gender === 'any') {
+  if (!VALID_URL_GENDERS.includes(gender as typeof VALID_URL_GENDERS[number])) {
     return { title: 'Not Found' }
   }
 
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function GenderPage({ params }: PageProps) {
   const { gender } = await params
 
-  if (!GENDERS.includes(gender as any) || gender === 'any') {
+  if (!VALID_URL_GENDERS.includes(gender as typeof VALID_URL_GENDERS[number])) {
     notFound()
   }
 

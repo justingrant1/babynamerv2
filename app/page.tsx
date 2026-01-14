@@ -9,6 +9,7 @@ import AdPlaceholder from '@/components/AdPlaceholder'
 import { NameData } from '@/lib/types/database'
 import { Loader2 } from 'lucide-react'
 import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
 import { useAuth } from '@/lib/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 
@@ -314,6 +315,7 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+      <Footer />
     </>
   )
 }

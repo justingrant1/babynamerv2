@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { 
   ORIGINS, 
-  GENDERS, 
+  VALID_URL_GENDERS, 
   ORIGIN_LABELS, 
   ORIGIN_DESCRIPTIONS,
   GENDER_LABELS,
@@ -25,7 +25,7 @@ interface PageProps {
 
 export async function generateStaticParams() {
   const params = []
-  for (const gender of GENDERS.filter(g => g !== 'any')) {
+  for (const gender of VALID_URL_GENDERS) {
     for (const origin of ORIGINS) {
       params.push({ gender, origin })
     }
@@ -36,7 +36,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { gender, origin } = await params
   
-  if (!ORIGINS.includes(origin as any) || !GENDERS.includes(gender as any)) {
+  if (!ORIGINS.includes(origin as any) || !VALID_URL_GENDERS.includes(gender as typeof VALID_URL_GENDERS[number])) {
     return { title: 'Not Found' }
   }
 
@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function GenderOriginPage({ params }: PageProps) {
   const { gender, origin } = await params
 
-  if (!ORIGINS.includes(origin as any) || !GENDERS.includes(gender as any) || gender === 'any') {
+  if (!ORIGINS.includes(origin as any) || !VALID_URL_GENDERS.includes(gender as typeof VALID_URL_GENDERS[number])) {
     notFound()
   }
 

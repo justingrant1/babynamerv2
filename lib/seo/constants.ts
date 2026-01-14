@@ -306,26 +306,29 @@ export const LETTERS = [
 // GENDERS (4 categories)
 // ============================================
 export const GENDERS = [
-  'boy',
-  'girl',
+  'male',
+  'female',
   'unisex',
   'any',
 ] as const
 
+// Valid URL genders (for routing and validation)
+export const VALID_URL_GENDERS = ['male', 'female', 'unisex'] as const
+
 export const GENDER_LABELS: Record<string, string> = {
+  'male': 'Boy',
+  'female': 'Girl',
   'boy': 'Boy',
   'girl': 'Girl',
-  'male': 'Male',
-  'female': 'Female',
   'unisex': 'Unisex',
   'any': 'Any Gender',
 }
 
 export const GENDER_DB_MAP: Record<string, string> = {
-  'boy': 'male',
-  'girl': 'female',
   'male': 'male',
   'female': 'female',
+  'boy': 'male',
+  'girl': 'female',
   'unisex': 'unisex',
   'any': '',
 }

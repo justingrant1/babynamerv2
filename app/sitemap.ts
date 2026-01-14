@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next'
 import { createClient } from '@/lib/supabase/server'
-import { ORIGINS, LETTERS, GENDERS } from '@/lib/seo/constants'
+import { ORIGINS, LETTERS, VALID_URL_GENDERS, RELIGIONS, MEANINGS, POPULARITY_LEVELS, SOUND_TYPES } from '@/lib/seo/constants'
 import { getAllMeaningSlugs } from '@/lib/seo/meanings'
 import { getAllSyllableCounts, getAllLengthSlugs } from '@/lib/seo/syllables'
 import { getAllCharacteristicSlugs } from '@/lib/seo/characteristics'
@@ -26,6 +26,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.9,
   })
 
+  // Gender pages
+  for (const gender of VALID_URL_GENDERS) {
+    routes.push({
+      url: `${baseUrl}/names/${gender}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    })
+  }
+
   // Origin pages (base + gender variants)
   for (const origin of ORIGINS) {
     routes.push({
@@ -35,7 +45,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     })
     
-    for (const gender of GENDERS.filter(g => g !== 'any')) {
+    for (const gender of VALID_URL_GENDERS) {
       routes.push({
         url: `${baseUrl}/names/${gender}/origin/${origin}`,
         lastModified: new Date(),
@@ -54,7 +64,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     })
     
-    for (const gender of GENDERS.filter(g => g !== 'any')) {
+    for (const gender of VALID_URL_GENDERS) {
       routes.push({
         url: `${baseUrl}/names/${gender}/starting-with/${letter}`,
         lastModified: new Date(),
@@ -74,7 +84,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     })
     
-    for (const gender of GENDERS.filter(g => g !== 'any')) {
+    for (const gender of VALID_URL_GENDERS) {
       routes.push({
         url: `${baseUrl}/names/${gender}/meaning/${meaning}`,
         lastModified: new Date(),
@@ -94,7 +104,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     })
     
-    for (const gender of GENDERS.filter(g => g !== 'any')) {
+    for (const gender of VALID_URL_GENDERS) {
       routes.push({
         url: `${baseUrl}/names/${gender}/syllables/${count}`,
         lastModified: new Date(),
@@ -114,7 +124,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     })
     
-    for (const gender of GENDERS.filter(g => g !== 'any')) {
+    for (const gender of VALID_URL_GENDERS) {
       routes.push({
         url: `${baseUrl}/names/${gender}/length/${slug}`,
         lastModified: new Date(),
@@ -134,7 +144,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9, // Higher priority - high search volume keywords
     })
     
-    for (const gender of GENDERS.filter(g => g !== 'any')) {
+    for (const gender of VALID_URL_GENDERS) {
       routes.push({
         url: `${baseUrl}/names/${gender}/characteristic/${trait}`,
         lastModified: new Date(),
@@ -156,7 +166,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       })
       
       // Gender-specific origin + characteristic pages
-      for (const gender of GENDERS.filter(g => g !== 'any')) {
+      for (const gender of VALID_URL_GENDERS) {
         routes.push({
           url: `${baseUrl}/names/${gender}/origin/${origin}/characteristic/${trait}`,
           lastModified: new Date(),
@@ -164,6 +174,91 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           priority: 0.75,
         })
       }
+    }
+  }
+  
+  // Religion pages (base + gender variants) - Phase 5
+  for (const religion of RELIGIONS) {
+    routes.push({
+      url: `${baseUrl}/names/religion/${religion}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.85,
+    })
+    
+    for (const gender of VALID_URL_GENDERS) {
+      routes.push({
+        url: `${baseUrl}/names/${gender}/religion/${religion}`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.75,
+      })
+    }
+  }
+  
+  // Origin + Starting Letter combination pages (gender variants) - Phase 5
+  for (const origin of ORIGINS) {
+    for (const letter of LETTERS) {
+      for (const gender of VALID_URL_GENDERS) {
+        routes.push({
+          url: `${baseUrl}/names/${gender}/origin/${origin}/starting-with/${letter}`,
+          lastModified: new Date(),
+          changeFrequency: 'weekly',
+          priority: 0.7,
+        })
+      }
+    }
+  }
+  
+  // Origin + Meaning combination pages (gender variants) - Phase 6
+  for (const origin of ORIGINS) {
+    for (const meaning of MEANINGS) {
+      for (const gender of VALID_URL_GENDERS) {
+        routes.push({
+          url: `${baseUrl}/names/${gender}/origin/${origin}/meaning/${meaning}`,
+          lastModified: new Date(),
+          changeFrequency: 'weekly',
+          priority: 0.7,
+        })
+      }
+    }
+  }
+  
+  // Popularity pages (base + gender variants) - Phase 7
+  for (const level of POPULARITY_LEVELS) {
+    routes.push({
+      url: `${baseUrl}/names/popularity/${level}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.85,
+    })
+    
+    for (const gender of VALID_URL_GENDERS) {
+      routes.push({
+        url: `${baseUrl}/names/${gender}/popularity/${level}`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.75,
+      })
+    }
+  }
+  
+  // Sound pages (base + gender variants) - Phase 7
+  for (const sound of SOUND_TYPES) {
+    routes.push({
+      url: `${baseUrl}/names/sound/${sound}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    })
+    
+    for (const gender of VALID_URL_GENDERS) {
+      routes.push({
+        url: `${baseUrl}/names/${gender}/sound/${sound}`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.7,
+      })
     }
   }
   

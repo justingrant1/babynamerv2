@@ -1,6 +1,7 @@
 import { ReactNode } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
 
 interface Breadcrumb {
   name: string
@@ -108,6 +109,7 @@ export default function SEOPageLayout({
           )}
         </div>
       </div>
+      <Footer />
     </>
   )
 }

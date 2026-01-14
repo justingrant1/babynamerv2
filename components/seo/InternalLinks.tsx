@@ -3,7 +3,7 @@ import {
   ORIGINS,
   MEANINGS,
   LETTERS,
-  GENDERS,
+  VALID_URL_GENDERS,
   ORIGIN_LABELS,
   MEANING_LABELS,
   GENDER_LABELS,
@@ -100,7 +100,7 @@ export default function InternalLinks({
             Browse by Gender
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {GENDERS.filter((g) => g !== 'any').map((gender) => (
+            {VALID_URL_GENDERS.map((gender) => (
               <Link
                 key={gender}
                 href={`/names/${gender}`}
