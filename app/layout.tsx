@@ -18,6 +18,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "AI Baby Namer - Find Your Perfect Baby Name",
   description: "Discover beautiful baby names with AI-powered recommendations based on your preferences",
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
