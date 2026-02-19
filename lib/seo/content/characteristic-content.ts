@@ -136,7 +136,7 @@ Historical figures including Alexander the Great, Victoria (queen), and Marcus A
     introduction: `Rare baby names offer ultimate distinction—names so uncommon that your child likely won't meet another person with their name. These gems might be forgotten historical names awaiting revival, international names rarely used in English-speaking countries, or simply beautiful names that never gained mainstream traction. Rare names like Ottilie, Caspian, Soren, and Celestine provide maximum uniqueness while maintaining wearability.`,
     culturalContext: `Rare names come from various sources: ancient names that fell out of use, international names from specific cultures, literary inventions, or simply names that never achieved popularity despite being perfectly lovely. Rarity doesn't indicate quality—many rare names are beautiful, meaningful, and perfectly functional.`,
     modernTrends: `The quest for rare names intensifies as parents seek true distinction. Name databases and social media make finding rare names easier. Parents mine old census records, international sources, and literature for hidden gems. However, sharing rare name ideas online can quickly eliminate their rarity.`,
-    tips: ['Verify pronunciation and spelling ease', 'Research thoroughly—rare doesn't mean good', 'Consider why the name is rare', 'Think about your child's experience being the only one'],
+    tips: ['Verify pronunciation and spelling ease', 'Research thoroughly—rare doesn\'t mean good', 'Consider why the name is rare', 'Think about your child\'s experience being the only one'],
     statistics: { popularityTrend: 'rising', percentOfNewborns: '8.9', topDecade: '2020s' }
   },
 
